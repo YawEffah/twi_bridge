@@ -1,0 +1,283 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to Twi Bridge — your English to Twi translator." />
+  <title>Sign In — Twi Bridge</title>
+  <link rel="icon" href="{% static 'core/images/logo.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'core/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'core/css/components.css' %}" />
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    /* ---- Left panel (branding) ---- */
+    .brand-panel {
+      width: 420px;
+      flex-shrink: 0;
+      background: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 44px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 10% 80%, rgba(212,84,26,0.25) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 20%, rgba(212,84,26,0.12) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .brand-panel .logo-mark {
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      position: relative;
+      z-index: 1;
+    }
+    .brand-panel .logo-mark svg { width: 20px; height: 20px; }
+    .brand-panel .logo-name {
+      font-size: 22px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-tagline {
+      position: relative;
+      z-index: 1;
+    }
+    .brand-tagline h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+      margin-bottom: 14px;
+    }
+    .brand-tagline p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.7;
+    }
+
+    .brand-footer {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- Right panel (form) ---- */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .form-heading {
+      margin-bottom: 28px;
+    }
+    .form-heading h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+    .form-heading p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .forgot {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 7px;
+    }
+    .forgot:hover { color: var(--accent); text-decoration: none; }
+
+    .form-footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-soft);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .form-footer a { font-weight: 600; }
+
+    .error-box {
+      background: var(--red-light);
+      border: 1px solid #FECACA;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---- Mobile ---- */
+    @media (max-width: 760px) {
+      body { flex-direction: column; }
+      .brand-panel { display: none; }
+      .form-panel { padding: 40px 20px; }
+
+      /* Show small logo on mobile */
+      .mobile-logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 32px;
+      }
+    }
+
+    @media (min-width: 761px) {
+      .mobile-logo { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left branding panel -->
+  <div class="brand-panel">
+    <a href="/" class="logo">
+      <div class="logo-mark">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      </div>
+      <span class="logo-name">Twi Bridge</span>
+    </a>
+
+    <div class="brand-tagline">
+      <h2>Bridging languages, connecting people.</h2>
+      <p>Translate instantly between English and Twi — for free, every time.</p>
+    </div>
+
+    <div class="brand-footer">© 2025 Twi Bridge</div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="form-panel">
+    <div class="form-box">
+
+      <!-- Mobile logo (hidden on desktop) -->
+      <a href="/" class="mobile-logo logo">
+        <div class="logo-mark">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </div>
+        <span class="logo-name">Twi Bridge</span>
+      </a>
+
+      <div class="form-heading">
+        <h1>Welcome back</h1>
+        <p>Sign in to your account to continue.</p>
+      </div>
+
+      {% if form.errors %}
+      <div class="error-box">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        Invalid username or password. Please try again.
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}" onsubmit="handleSubmit(this)">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-user input-icon"></i>
+            <input
+              type="text"
+              id="id_username"
+              name="username"
+              placeholder="Enter your username"
+              autocomplete="username"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+              type="password"
+              id="id_password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="toggle-pw" onclick="togglePw('id_password', 'pw-eye')" aria-label="Toggle password">
+              <i class="fa-regular fa-eye" id="pw-eye"></i>
+            </button>
+          </div>
+          <a href="#" class="forgot">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn" style="margin-top: 8px;">
+          <div class="spinner"></div>
+          <span class="btn-label">
+            Sign in <i class="fa-solid fa-arrow-right" style="font-size:12px;"></i>
+          </span>
+        </button>
+      </form>
+
+      <div class="form-footer">
+        Don't have an account? <a href="{% url 'register' %}">Create one</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function togglePw(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon  = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function handleSubmit(form) {
+      const btn = form.querySelector('.submit-btn');
+      btn.classList.add('loading');
+    }
+  </script>
+
+</body>
+</html>

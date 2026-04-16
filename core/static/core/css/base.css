@@ -1,0 +1,78 @@
+/* ============================================================
+   BASE.CSS — Twi Bridge Design System
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --accent:        #D4541A;
+  --accent-hover:  #B8431A;
+  --accent-light:  #FEF0E8;
+
+  /* Surfaces */
+  --bg:            #F8F7F5;
+  --surface:       #FFFFFF;
+  --surface-2:     #F3F2EF;
+
+  /* Borders */
+  --border:        #E4E2DD;
+  --border-soft:   #EDECE8;
+
+  /* Text */
+  --text-primary:  #18181B;
+  --text-secondary:#6B7280;
+  --text-muted:    #9CA3AF;
+
+  /* Semantic */
+  --green:         #16A34A;
+  --green-light:   #F0FDF4;
+  --green-border:  #BBF7D0;
+  --red:           #DC2626;
+  --red-light:     #FEF2F2;
+
+  /* Layout */
+  --sidebar-w:     260px;
+  --radius:        10px;
+  --radius-lg:     16px;
+
+  /* Typography */
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ---- RESET ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* ---- BASE ELEMENTS ---- */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.25; }
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.logo-mark i, 
+.logo i{
+  color: white;
+}

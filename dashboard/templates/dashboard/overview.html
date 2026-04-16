@@ -1,0 +1,189 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Overview{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ===== STAT CARDS ===== -->
+<div class="stat-grid">
+
+  <div class="stat-card">
+    <div class="stat-card-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+    <div class="stat-card-label">Total Users</div>
+    <div class="stat-card-value">{{ total_users }}</div>
+    <div class="stat-card-sub">{{ new_users_week }} joined this week</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon icon-orange"><i class="fa-solid fa-language"></i></div>
+    <div class="stat-card-label">All Translations</div>
+    <div class="stat-card-value">{{ total_translations }}</div>
+    <div class="stat-card-sub">{{ month_translations }} in last 30 days</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon icon-green"><i class="fa-solid fa-chart-bar"></i></div>
+    <div class="stat-card-label">This Week</div>
+    <div class="stat-card-value">{{ week_translations }}</div>
+    <div class="stat-card-sub">translations</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="stat-card-label">Active Users</div>
+    <div class="stat-card-value">{{ active_users }}</div>
+    <div class="stat-card-sub">{{ staff_users }} staff member{{ staff_users|pluralize }}</div>
+  </div>
+
+</div>
+
+<!-- ===== CHARTS ROW ===== -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:24px;">
+
+  <!-- Direction split -->
+  <div class="direction-bar">
+    <div class="direction-bar-title">Translation Directions</div>
+    {% if total_translations > 0 %}
+    <div style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); margin-bottom:5px;">
+        <span>English → Twi</span>
+        <strong>{{ en_tw_count }}</strong>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-en" style="width:{% widthratio en_tw_count total_translations 100 %}%;"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); margin-bottom:5px;">
+        <span>Twi → English</span>
+        <strong>{{ tw_en_count }}</strong>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-tw" style="width:{% widthratio tw_en_count total_translations 100 %}%;"></div>
+      </div>
+    </div>
+    <div class="bar-legend" style="margin-top:14px;">
+      <span><span class="bar-legend-dot" style="background:#3B82F6;"></span>EN→TW</span>
+      <span><span class="bar-legend-dot" style="background:var(--accent);"></span>TW→EN</span>
+    </div>
+    {% else %}
+    <div style="font-size:13px; color:var(--text-muted); padding:16px 0;">No translations recorded yet.</div>
+    {% endif %}
+  </div>
+
+  <!-- Daily sparkline -->
+  <div class="direction-bar">
+    <div class="direction-bar-title">Daily Activity (last 7 days)</div>
+    {% if daily_stats %}
+    {% with max_count=daily_stats|dictsort:"count"|last %}
+    <div class="sparkline">
+      {% for day in daily_stats %}
+      <div
+        class="spark-bar"
+        data-count="{{ day.count }}"
+        title="{{ day.label }}: {{ day.count }}"
+        style="height:{% if max_count.count > 0 %}{% widthratio day.count max_count.count 100 %}{% else %}10{% endif %}%;"
+      ></div>
+      {% endfor %}
+    </div>
+    {% endwith %}
+    <div style="display:flex; justify-content:space-between; margin-top:8px;">
+      {% for day in daily_stats %}
+      <span style="font-size:10px; color:var(--text-muted);">{{ day.label|slice:"4:" }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ===== BOTTOM ROW: Top users + Recent translations ===== -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+
+  <!-- Top users -->
+  <div>
+    <div class="section-head">
+      Most Active Users
+      <a href="{% url 'dashboard_users' %}" style="font-size:12px; font-weight:500; color:var(--accent); text-transform:none; letter-spacing:0;">See all →</a>
+    </div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Translations</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in top_users %}
+          <tr>
+            <td style="color:var(--text-muted); font-size:12px; font-weight:600;">{{ forloop.counter }}</td>
+            <td>
+              <a href="{% url 'dashboard_user_detail' u.id %}" style="font-weight:600; color:var(--text-primary); text-decoration:none;">
+                {{ u.username }}
+              </a>
+              {% if u.is_staff %}<span class="status-badge status-staff" style="margin-left:6px;">Staff</span>{% endif %}
+            </td>
+            <td style="font-weight:700; color:var(--accent);">{{ u.t_count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">No data yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent translations -->
+  <div>
+    <div class="section-head">
+      Recent Translations
+      <a href="{% url 'dashboard_translations' %}" style="font-size:12px; font-weight:500; color:var(--accent); text-transform:none; letter-spacing:0;">See all →</a>
+    </div>
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Text</th>
+            <th>Dir</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in recent_translations %}
+          <tr>
+            <td>
+              {% if t.user %}
+              <a href="{% url 'dashboard_user_detail' t.user.id %}" style="font-weight:600; color:var(--text-primary); text-decoration:none;">
+                {{ t.user.username }}
+              </a>
+              {% else %}
+              <div style="font-weight:600; color:var(--text-secondary);">
+                Guest
+                <div style="font-size:10px; opacity:0.6; font-weight:400;">{{ t.ip_address|default:"Unknown" }}</div>
+              </div>
+              {% endif %}
+            </td>
+            <td style="color:var(--text-secondary); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.source_text|truncatechars:22 }}</td>
+            <td>
+              <span class="badge {% if t.direction == 'en-tw' %}badge-en{% else %}badge-tw{% endif %}">
+                {% if t.direction == 'en-tw' %}EN{% else %}TW{% endif %}
+              </span>
+            </td>
+            <td style="font-size:11px; color:var(--text-muted); white-space:nowrap;">{{ t.created_at|timesince }} ago</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">No translations yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

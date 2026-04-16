@@ -1,0 +1,299 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Manage your Twi Bridge account settings and security." />
+  <title>Account Settings — Twi Bridge</title>
+  <link rel="icon" href="{% static 'core/images/logo.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'core/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'core/css/components.css' %}" />
+  <style>
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ---- Top nav ---- */
+    .topnav {
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topnav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s;
+      padding: 5px 0;
+    }
+    .back-link:hover { color: var(--text-primary); text-decoration: none; }
+
+    /* ---- Page wrapper ---- */
+    .page-wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    /* ---- Page header ---- */
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .user-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .user-avatar-lg {
+      width: 52px;
+      height: 52px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+    }
+
+    .user-header-info h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+    }
+    .user-header-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ---- Section ---- */
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .card-title i { color: var(--accent); font-size: 14px; }
+
+    .help-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .errorlist {
+      list-style: none;
+      padding: 0;
+      margin-top: 6px;
+    }
+    .errorlist li {
+      font-size: 12px;
+      color: var(--red);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .errorlist li::before {
+      content: '\f06a'; /* exclamation circle */
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+    }
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    hr.section-divider {
+      margin: 8px 0;
+      border: none;
+      height: 1px;
+      background: var(--border-soft);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top navigation -->
+  <nav class="topnav">
+    <div class="topnav-left">
+      <a href="/" class="back-link">
+        <i class="fa-solid fa-arrow-left" style="font-size:12px;"></i>
+        Back
+      </a>
+      <div style="width:1px; height:18px; background:var(--border);"></div>
+      <a href="/" class="logo">
+        <div class="logo-mark" style="width:26px; height:26px;">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </div>
+        <span class="logo-name" style="font-size:15px;">Twi Bridge</span>
+      </a>
+    </div>
+
+    <form method="post" action="{% url 'logout' %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-sm">
+        <i class="fa-solid fa-right-from-bracket" style="font-size:12px;"></i>
+        Sign out
+      </button>
+    </form>
+  </nav>
+
+  <!-- Page content -->
+  <div class="page-wrapper">
+
+    <!-- User header -->
+    <div class="user-header">
+      <div class="user-avatar-lg">{{ user.username.0|upper }}</div>
+      <div class="user-header-info">
+        <h1>{{ user.username }}</h1>
+        <p>{{ user.email|default:"No email set" }}</p>
+      </div>
+    </div>
+
+    <!-- Success messages -->
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom: 8px;">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Profile information -->
+    <div class="section">
+      <div class="section-label">Profile</div>
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-regular fa-user"></i>
+          Profile Information
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="update_profile" value="1" />
+          {% for field in u_form %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <ul class="errorlist">
+              {% for error in field.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if field.help_text %}
+            <div class="help-text">{{ field.help_text|safe }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="section">
+      <div class="section-label">Security</div>
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-shield-halved"></i>
+          Change Password
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="change_password" value="1" />
+          {% for field in p_form %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <ul class="errorlist">
+              {% for error in field.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if field.help_text %}
+            <div class="help-text">{{ field.help_text|safe }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- .page-wrapper -->
+
+</body>
+</html>

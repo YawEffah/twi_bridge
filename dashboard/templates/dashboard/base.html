@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Dashboard{% endblock %} — Twi Bridge Admin</title>
+  <link rel="icon" href="{% static 'core/images/logo.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'core/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'core/css/components.css' %}" />
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="dash-body">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="dash-sidebar" id="dash-sidebar">
+    <div class="dash-sidebar-brand">
+      <a href="/" class="logo">
+        <div class="logo-mark">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </div>
+        <span class="logo-name">Twi Bridge</span>
+      </a>
+    </div>
+
+    <div class="dash-sidebar-label">Admin</div>
+
+    <nav class="dash-nav">
+      <a href="{% url 'dashboard_overview' %}"
+         class="dash-nav-item {% if request.resolver_match.url_name == 'dashboard_overview' %}active{% endif %}">
+        <i class="fa-solid fa-chart-line"></i> Overview
+      </a>
+      <a href="{% url 'dashboard_users' %}"
+         class="dash-nav-item {% if 'dashboard_user' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fa-solid fa-users"></i> Users
+      </a>
+      <a href="{% url 'dashboard_translations' %}"
+         class="dash-nav-item {% if request.resolver_match.url_name == 'dashboard_translations' %}active{% endif %}">
+        <i class="fa-solid fa-language"></i> Translations
+      </a>
+      <a href="{% url 'dashboard_settings' %}"
+         class="dash-nav-item {% if request.resolver_match.url_name == 'dashboard_settings' %}active{% endif %}">
+        <i class="fa-solid fa-gear"></i> Settings
+      </a>
+
+      <div class="dash-sidebar-label" style="padding-top:16px;">App</div>
+      <a href="/" class="dash-nav-item">
+        <i class="fa-solid fa-arrow-left"></i> Back to App
+      </a>
+      <a href="/admin/" class="dash-nav-item">
+        <i class="fa-solid fa-shield-halved"></i> Django Admin
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user-avatar">{{ request.user.username.0|upper }}</div>
+      <span class="dash-user-name">{{ request.user.username }}</span>
+      <form method="post" action="{% url 'logout' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="dash-logout" title="Sign out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="dash-main">
+
+    <!-- Top bar -->
+    <div class="dash-topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="icon-btn" id="sidebar-toggle" onclick="toggleSidebar()" style="display:none;">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <div class="dash-topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="dash-breadcrumb">{% block breadcrumb %}{% endblock %}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="status-badge status-staff">
+          <i class="fa-solid fa-shield-halved"></i> Staff
+        </span>
+      </div>
+    </div>
+
+    <!-- Django messages -->
+    {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom:8px;">
+        <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Page content -->
+    <div class="dash-page">
+      {% block content %}{% endblock %}
+    </div>
+
+  </div><!-- .dash-main -->
+
+  <!-- ===== CONFIRM MODAL ===== -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon" id="modal-icon"><i class="fa-solid fa-circle-info"></i></div>
+          <h3 class="modal-title" id="modal-title">Confirm Action</h3>
+        </div>
+        <button class="modal-close" onclick="closeConfirm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modal-message">Are you sure you want to proceed?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="modal-confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('dash-sidebar').classList.toggle('open');
+    }
+
+    /* ---- Custom Confirm Modal ---- */
+    let modalCallback = null;
+    let lastFocusedElement = null;
+
+    function showConfirm({ title, message, confirmText, danger, onConfirm }) {
+      const modal = document.getElementById('confirm-modal');
+      const titleEl = document.getElementById('modal-title');
+      const msgEl = document.getElementById('modal-message');
+      const btnEl = document.getElementById('modal-confirm-btn');
+      const iconEl = document.getElementById('modal-icon');
+
+      titleEl.textContent = title || 'Confirm Action';
+      msgEl.textContent = message || 'Are you sure?';
+      btnEl.textContent = confirmText || 'Confirm';
+      modalCallback = onConfirm;
+      lastFocusedElement = document.activeElement;
+
+      // Styling
+      if (danger) {
+        btnEl.className = 'btn btn-danger btn-sm';
+        iconEl.className = 'modal-icon icon-red';
+        iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      } else {
+        btnEl.className = 'btn btn-primary btn-sm';
+        iconEl.className = 'modal-icon icon-blue';
+        iconEl.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+      }
+
+      modal.classList.add('open');
+      btnEl.onclick = () => {
+        if (modalCallback) modalCallback();
+        closeConfirm();
+      };
+
+      // Accessibility: trap focus
+      setTimeout(() => btnEl.focus(), 50);
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirm-modal').classList.remove('open');
+      if (lastFocusedElement) lastFocusedElement.focus();
+      modalCallback = null;
+    }
+
+    // Close on backdrop click or Escape
+    window.onclick = (e) => {
+      const modal = document.getElementById('confirm-modal');
+      if (e.target === modal) closeConfirm();
+    };
+    window.onkeydown = (e) => {
+      if (e.key === 'Escape') closeConfirm();
+    };
+
+    // Show hamburger on mobile
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.innerWidth <= 900) {
+        document.getElementById('sidebar-toggle').style.display = 'flex';
+      }
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

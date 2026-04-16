@@ -1,0 +1,139 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}System Settings{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'dashboard_overview' %}">Dashboard</a>
+  <i class="fa-solid fa-chevron-right"></i>
+  Settings
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 500px;">
+  <div class="section-head">Global Request Limits</div>
+  
+  <div class="card" style="padding: 32px 36px;">
+    <form method="post" action="" onsubmit="handleSubmit(this)">
+      {% csrf_token %}
+      
+      <!-- Enable/Disable Toggle -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border-soft);">
+        <div>
+          <label style="margin-bottom: 2px;">Enable Rate Limiting</label>
+          <div style="font-size: 12px; color: var(--text-muted); font-weight: 400;">Prevent users from making excessive translation requests.</div>
+        </div>
+        <div class="input-wrap">
+          <label class="switch">
+            <input type="checkbox" name="enabled" {% if setting.enabled %}checked{% endif %}>
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Max Requests -->
+      <div class="form-group">
+        <label for="max_requests">Max Requests</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-gauge-high input-icon"></i>
+          <input 
+            type="number" 
+            name="max_requests" 
+            id="max_requests" 
+            value="{{ setting.max_requests }}" 
+            min="1" 
+            required 
+            placeholder="e.g. 50"
+          >
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; font-weight: 400;">
+          Allow users to perform this many translations...
+        </div>
+      </div>
+
+      <!-- Time Window -->
+      <div class="form-group" style="margin-bottom: 32px;">
+        <label for="window_hours">Time Window (Hours)</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-clock input-icon"></i>
+          <input 
+            type="number" 
+            name="window_hours" 
+            id="window_hours" 
+            value="{{ setting.window_hours }}" 
+            min="1" 
+            required 
+            placeholder="e.g. 1"
+          >
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; font-weight: 400;">
+          ...within this many hours.
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <div class="spinner"></div>
+        <span class="btn-label">
+          Save Settings <i class="fa-solid fa-check" style="font-size:12px; margin-left:4px;"></i>
+        </span>
+      </button>
+
+    </form>
+  </div>
+  
+  <div style="margin-top: 24px; padding: 16px; background: rgba(212, 84, 26, 0.04); border-radius: 12px; border: 1px solid rgba(212, 84, 26, 0.1);">
+    <div style="display:flex; gap:12px;">
+      <i class="fa-solid fa-circle-info" style="color: var(--accent); margin-top: 2px;"></i>
+      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; font-weight: 400;">
+        <strong style="color: var(--text-primary); font-weight: 600;">Note:</strong> Rate limits apply to all registered users. Staff users and administrators are exempt from these limits to ensure they can always test the service.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleSubmit(form) {
+    const btn = form.querySelector('.submit-btn');
+    btn.classList.add('loading');
+  }
+</script>
+
+<style>
+  /* Custom Toggle Switch - Refined */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--border);
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  input:checked + .slider { background-color: var(--accent); }
+  input:checked + .slider:before { transform: translateX(20px); }
+  
+  /* Focus indicator for accessibility */
+  .switch input:focus + .slider {
+    box-shadow: 0 0 0 3px rgba(212, 84, 26, 0.15);
+  }
+</style>
+
+{% endblock %}

@@ -1,0 +1,368 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Twi Bridge — Translate instantly between English and Twi. Free, fast, and accurate." />
+  <title>Twi Bridge — English ↔ Twi Translator</title>
+  <link rel="icon" href="{% static 'core/images/logo.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'core/css/base.css' %}" />
+  <link rel="stylesheet" href="{% static 'core/css/components.css' %}" />
+  <link rel="stylesheet" href="{% static 'core/css/translator.css' %}" />
+</head>
+
+<body>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}" id="django-toast-{{ forloop.counter }}">
+      <div class="toast-icon">
+        <i class="fa-solid {% if message.tags == 'success' %}fa-check{% elif message.tags == 'error' %}fa-xmark{% else %}fa-info{% endif %}"></i>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">{% if message.tags == 'success' %}Success{% elif message.tags == 'error' %}Error{% else %}Notice{% endif %}</div>
+        <div class="toast-msg">{{ message }}</div>
+      </div>
+      <div class="toast-close" onclick="closeToast('django-toast-{{ forloop.counter }}')">
+        <i class="fa-solid fa-xmark"></i>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ====== SIDEBAR ====== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="logo">
+        <div class="logo-mark">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </div>
+        <span class="logo-name">Twi Bridge</span>
+      </a>
+      <!-- Close button (mobile only) -->
+      <button class="icon-btn" onclick="closeSidebar()" style="display:none;" id="sidebar-close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <button class="new-chat-btn" onclick="newSession()">
+      <i class="fa-solid fa-plus" style="font-size:11px;"></i>
+      New translation
+    </button>
+
+    {% if request.user.is_authenticated and request.user.is_staff %}
+    <a class="new-chat-btn auth-btn-secondary" href="{% url 'dashboard_overview' %}">
+      <i class="fa-solid fa-gears" style="font-size:11px;"></i>
+      Admin Panel
+    </a>
+    {% endif %}
+
+    <div class="sidebar-section-title">History</div>
+
+    <div class="history-list">
+      {% if not user.is_authenticated %}
+      <div class="history-empty">
+        <i class="fa-regular fa-clock"></i>
+        <a href="{% url 'login' %}">Sign in</a> to save and view your translation history.
+      </div>
+      {% else %}
+        {% for item in db_history %}
+        <div class="history-item" onclick="loadEntry('{{ item.source_text|escapejs }}', '{{ item.translated_text|escapejs }}', '{{ item.direction }}')">
+          <div class="history-item-meta">
+            <span class="badge {% if item.direction == 'en-tw' %}badge-en{% else %}badge-tw{% endif %}">{% if item.direction == 'en-tw' %}EN{% else %}TW{% endif %}</span>
+            <i class="fa-solid fa-arrow-right" style="font-size:8px; color:var(--text-muted);"></i>
+            <span class="badge {% if item.direction == 'en-tw' %}badge-tw{% else %}badge-en{% endif %}">{% if item.direction == 'en-tw' %}TW{% else %}EN{% endif %}</span>
+          </div>
+          <div class="history-item-source">{{ item.source_text|truncatechars:28 }}</div>
+          <div class="history-item-meta" style="margin-top:3px;">{{ item.created_at|date:"M j" }} · {{ item.created_at|time:"g:i A" }}</div>
+        </div>
+        {% empty %}
+        <div class="history-empty">
+          <i class="fa-regular fa-comment-dots"></i>
+          No translations yet. Go ahead!
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    {% if user.is_authenticated %}
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ user.username.0|upper }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ user.username }}</div>
+        <div class="user-email">{{ user.email }}</div>
+      </div>
+      <div class="user-actions">
+        <a href="{% url 'profile' %}" class="icon-btn" title="Settings">
+          <i class="fa-solid fa-gear"></i>
+        </a>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" class="icon-btn icon-btn-danger" title="Sign out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="sidebar-auth">
+      <a href="{% url 'login' %}" class="auth-btn auth-btn-secondary">Log in</a>
+      <a href="{% url 'register' %}" class="auth-btn auth-btn-primary">Create account</a>
+    </div>
+    {% endif %}
+
+    <div class="sidebar-footer">© 2025 Twi Bridge</div>
+  </aside>
+
+  <!-- ====== MAIN ====== -->
+  <div class="main-content">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <button class="hamburger" id="hamburger-btn" onclick="openSidebar()" aria-label="Open menu">
+          <i class="fa-solid fa-bars" style="font-size:15px;"></i>
+        </button>
+        <span class="page-title">Translate</span>
+      </div>
+
+      <div class="direction-switcher">
+        <button class="lang-pill {% if direction == 'en-tw' %}active{% endif %}" id="pill-en" onclick="setDirection('en-tw')">English → Twi</button>
+        <button class="swap-btn" onclick="swapDirection()" title="Swap">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </button>
+        <button class="lang-pill {% if direction == 'tw-en' %}active{% endif %}" id="pill-tw" onclick="setDirection('tw-en')">Twi → English</button>
+      </div>
+
+      <div style="width:120px;"></div><!-- spacer to center the switcher -->
+    </div>
+
+    <!-- Workspace -->
+    <form method="post" class="translate-workspace" id="workspace">
+      {% csrf_token %}
+      <input type="hidden" name="direction" id="direction-input" value="{{ direction }}" />
+
+      <!-- Panels -->
+      <div class="panels">
+        <!-- Source -->
+        <div class="panel">
+          <div class="panel-label" id="label-source">{% if direction == 'en-tw' %}English{% else %}Twi{% endif %}</div>
+          <textarea
+            id="input-text"
+            name="text"
+            placeholder="Type or paste text here…"
+            oninput="updateCharCount()"
+            onkeydown="handleKey(event)"
+          >{{ input_text }}</textarea>
+          <div class="panel-footer">
+            <span class="char-count" id="char-count">0 chars</span>
+            <button type="button" class="clear-btn" onclick="clearInput()">
+              <i class="fa-regular fa-trash-can"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div class="panel panel-output">
+          <div class="panel-label" id="label-target">{% if direction == 'en-tw' %}Twi{% else %}English{% endif %}</div>
+          <textarea
+            id="output-text"
+            readonly
+            placeholder="Translation will appear here…"
+          >{{ translated_text }}</textarea>
+          <div class="panel-footer">
+            <span class="char-count" id="output-char-count">{% if translated_text %}{{ translated_text|length }} chars{% endif %}</span>
+            <button type="button" class="copy-btn" onclick="copyOutput()" id="copy-btn">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Banner -->
+      <div class="error-banner" id="error-banner">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="error-text">Something went wrong. Please try again.</span>
+      </div>
+
+      <!-- Translate button -->
+      <button type="submit" class="translate-btn" id="translate-btn">
+        <div class="spinner"></div>
+        <span class="btn-text">
+          <i class="fa-solid fa-language"></i>
+          Translate
+        </span>
+      </button>
+
+      <!-- Result feed -->
+      {% if translated_text %}
+      <div class="history-feed-title">Result</div>
+      <div class="history-feed">
+        <div class="feed-card">
+          <div class="feed-card-langs">
+            <span class="badge {% if direction == 'en-tw' %}badge-en{% else %}badge-tw{% endif %}">{% if direction == 'en-tw' %}English{% else %}Twi{% endif %}</span>
+            <span class="arrow"><i class="fa-solid fa-arrow-right" style="font-size:9px;"></i></span>
+            <span class="badge {% if direction == 'en-tw' %}badge-tw{% else %}badge-en{% endif %}">{% if direction == 'en-tw' %}Twi{% else %}English{% endif %}</span>
+          </div>
+          <div class="feed-card-source">{{ input_text }}</div>
+          <div class="feed-card-result">{{ translated_text }}</div>
+          <div class="feed-card-time">Just now</div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state" id="empty-state">
+        <i class="fa-regular fa-comment-dots"></i>
+        <p>Enter text above and press <strong>Translate</strong>, or use <kbd style="font-family:var(--font); background:var(--surface-2); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:11px;">Ctrl+Enter</kbd></p>
+      </div>
+      {% endif %}
+
+    </form>
+  </div><!-- .main-content -->
+
+  <script>
+    let direction = "{{ direction }}";
+
+    /* ---- Direction ---- */
+    function setDirection(dir) {
+      direction = dir;
+      document.getElementById('direction-input').value = dir;
+      document.getElementById('pill-en').classList.toggle('active', dir === 'en-tw');
+      document.getElementById('pill-tw').classList.toggle('active', dir === 'tw-en');
+      document.getElementById('label-source').textContent = dir === 'en-tw' ? 'English' : 'Twi';
+      document.getElementById('label-target').textContent = dir === 'en-tw' ? 'Twi' : 'English';
+      document.getElementById('input-text').placeholder = dir === 'en-tw'
+        ? 'Type or paste English text here…'
+        : 'Type or paste Twi text here…';
+    }
+
+    function swapDirection() {
+      setDirection(direction === 'en-tw' ? 'tw-en' : 'en-tw');
+    }
+
+    /* ---- Char count ---- */
+    function updateCharCount() {
+      const n = document.getElementById('input-text').value.length;
+      document.getElementById('char-count').textContent = n + ' char' + (n === 1 ? '' : 's');
+    }
+
+    /* ---- Clear ---- */
+    function clearInput() {
+      document.getElementById('input-text').value = '';
+      document.getElementById('output-text').value = '';
+      document.getElementById('char-count').textContent = '0 chars';
+      document.getElementById('output-char-count').textContent = '';
+    }
+
+    /* ---- Hotkey ---- */
+    function handleKey(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        document.getElementById('workspace').submit();
+      }
+    }
+
+    /* ---- Copy ---- */
+    function copyOutput() {
+      const val = document.getElementById('output-text').value;
+      if (!val) return;
+      navigator.clipboard.writeText(val).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        }, 1800);
+      });
+    }
+
+    /* ---- Load history entry ---- */
+    function loadEntry(source, result, dir) {
+      setDirection(dir);
+      document.getElementById('input-text').value = source;
+      document.getElementById('output-text').value = result;
+      updateCharCount();
+      document.getElementById('output-char-count').textContent = result.length + ' chars';
+      if (window.innerWidth < 768) closeSidebar();
+    }
+
+    function newSession() { window.location.href = '/'; }
+
+    /* ---- Toasts ---- */
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const id = 'toast-' + Date.now();
+      const iconMap = { success: 'fa-check', error: 'fa-xmark', info: 'fa-info' };
+      const titleMap = { success: 'Success', error: 'Error', info: 'Notice' };
+      container.insertAdjacentHTML('beforeend', `
+        <div class="toast toast-${type}" id="${id}">
+          <div class="toast-icon"><i class="fa-solid ${iconMap[type] || 'fa-info'}"></i></div>
+          <div class="toast-content">
+            <div class="toast-title">${titleMap[type] || 'Notice'}</div>
+            <div class="toast-msg">${msg}</div>
+          </div>
+          <div class="toast-close" onclick="closeToast('${id}')">
+            <i class="fa-solid fa-xmark"></i>
+          </div>
+        </div>`);
+      setTimeout(() => closeToast(id), 6000);
+    }
+
+    function closeToast(id) {
+      const t = document.getElementById(id);
+      if (t) { t.classList.add('hide'); setTimeout(() => t.remove(), 250); }
+    }
+
+    /* ---- Mobile Sidebar ---- */
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebar-overlay').classList.add('open');
+      document.getElementById('sidebar-close').style.display = 'flex';
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+      document.getElementById('sidebar-close').style.display = 'none';
+    }
+
+    /* ---- Init ---- */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auto-dismiss Django toasts
+      document.querySelectorAll('.toast[id^="django-toast"]').forEach(t => {
+        setTimeout(() => closeToast(t.id), 6000);
+      });
+
+      updateCharCount();
+
+      // Form submit — validate + loading state
+      const form = document.getElementById('workspace');
+      if (form) {
+        form.addEventListener('submit', e => {
+          if (!navigator.onLine) {
+            e.preventDefault();
+            showToast('You are offline. Please check your connection.', 'error');
+            return;
+          }
+          const input = document.getElementById('input-text');
+          if (!input.value.trim()) {
+            e.preventDefault();
+            input.focus();
+            showToast('Please enter some text to translate.', 'error');
+            return;
+          }
+          const btn = document.getElementById('translate-btn');
+          if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

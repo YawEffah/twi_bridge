@@ -1,0 +1,201 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}{{ target.username }}{% endblock %}
+{% block page_title %}{{ target.username }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'dashboard_overview' %}">Dashboard</a>
+  <i class="fa-solid fa-chevron-right"></i>
+  <a href="{% url 'dashboard_users' %}">Users</a>
+  <i class="fa-solid fa-chevron-right"></i>
+  {{ target.username }}
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== USER PROFILE CARD ===== -->
+<div class="user-profile-card">
+  <div class="user-avatar-xl">{{ target.username.0|upper }}</div>
+
+  <div class="user-profile-info">
+    <div class="user-profile-name">
+      {{ target.username }}
+      {% if target.is_staff %}<span class="status-badge status-staff" style="margin-left:8px; font-size:11px;"><i class="fa-solid fa-shield-halved" style="font-size:9px;"></i> Staff</span>{% endif %}
+      {% if target.is_active %}
+        <span class="status-badge status-active" style="margin-left:6px; font-size:11px;"><i class="fa-solid fa-circle" style="font-size:7px;"></i> Active</span>
+      {% else %}
+        <span class="status-badge status-inactive" style="margin-left:6px; font-size:11px;"><i class="fa-solid fa-ban" style="font-size:9px;"></i> Suspended</span>
+      {% endif %}
+    </div>
+    <div class="user-profile-meta">
+      <span><i class="fa-regular fa-envelope"></i> {{ target.email|default:"No email" }}</span>
+      <span><i class="fa-regular fa-calendar"></i> Joined {{ target.date_joined|date:"M j, Y" }}</span>
+      <span><i class="fa-regular fa-clock"></i> Last login:
+        {% if target.last_login %}{{ target.last_login|timesince }} ago{% else %}Never{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="action-buttons">
+    {% if target.is_active %}
+    <form method="post" action="{% url 'dashboard_user_action' target.id %}" id="form-suspend">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="suspend" />
+      <button type="button" class="btn btn-warn btn-sm"
+        onclick="showConfirm({
+          title: 'Suspend user?',
+          message: '{{ target.username }} will not be able to log in until reactivated.',
+          confirmText: 'Suspend',
+          onConfirm: () => document.getElementById('form-suspend').submit()
+        })">
+        <i class="fa-solid fa-ban"></i> Suspend
+      </button>
+    </form>
+    {% else %}
+    <form method="post" action="{% url 'dashboard_user_action' target.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="activate" />
+      <button type="submit" class="btn btn-sm" style="background:var(--green-light); color:var(--green); border:1px solid var(--green-border);">
+        <i class="fa-solid fa-circle-check"></i> Activate
+      </button>
+    </form>
+    {% endif %}
+
+    {% if target.is_staff %}
+    <form method="post" action="{% url 'dashboard_user_action' target.id %}" id="form-remove-staff">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="remove_staff" />
+      <button type="button" class="btn btn-ghost btn-sm"
+        onclick="showConfirm({
+          title: 'Remove staff access?',
+          message: 'This will revoke admin dashboard access for {{ target.username }}.',
+          confirmText: 'Remove access',
+          onConfirm: () => document.getElementById('form-remove-staff').submit()
+        })">
+        <i class="fa-solid fa-user-minus"></i> Remove Staff
+      </button>
+    </form>
+    {% else %}
+    <form method="post" action="{% url 'dashboard_user_action' target.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="make_staff" />
+      <button type="submit" class="btn btn-ghost btn-sm">
+        <i class="fa-solid fa-user-shield"></i> Make Staff
+      </button>
+    </form>
+    {% endif %}
+
+    {% if target != request.user %}
+    <form method="post" action="{% url 'dashboard_user_action' target.id %}" id="form-delete">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete" />
+      <button type="button" class="btn btn-danger btn-sm"
+        onclick="showConfirm({
+          title: 'Delete account?',
+          message: 'Permanently delete {{ target.username }} and ALL their translation data? This cannot be undone.',
+          confirmText: 'Yes, delete permanently',
+          danger: true,
+          onConfirm: () => document.getElementById('form-delete').submit()
+        })">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ===== STATS MINI ROW ===== -->
+<div class="detail-grid">
+  <div class="stat-card">
+    <div class="stat-card-icon icon-orange"><i class="fa-solid fa-language"></i></div>
+    <div class="stat-card-label">Total Translations</div>
+    <div class="stat-card-value">{{ total_t }}</div>
+    <div class="stat-card-sub">{{ en_tw }} EN→TW &nbsp;·&nbsp; {{ tw_en }} TW→EN</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon icon-blue"><i class="fa-regular fa-calendar"></i></div>
+    <div class="stat-card-label">Member Since</div>
+    <div class="stat-card-value" style="font-size:22px;">{{ target.date_joined|date:"M j, Y" }}</div>
+    <div class="stat-card-sub">ID #{{ target.id }}</div>
+  </div>
+</div>
+
+<!-- ===== TRANSLATION HISTORY ===== -->
+<div class="section-head">
+  Translation History
+  <span style="font-size:12px; font-weight:500; color:var(--text-muted); text-transform:none; letter-spacing:0;">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </span>
+</div>
+
+<div class="dash-table-wrap">
+  <table class="dash-table">
+    <thead>
+      <tr>
+        <th>Direction</th>
+        <th>Source Text</th>
+        <th>Translation</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in page_obj %}
+      <tr>
+        <td>
+          <span class="badge {% if t.direction == 'en-tw' %}badge-en{% else %}badge-tw{% endif %}">
+            {% if t.direction == 'en-tw' %}EN{% else %}TW{% endif %}
+          </span>
+          <i class="fa-solid fa-arrow-right" style="font-size:9px; color:var(--text-muted); margin:0 4px;"></i>
+          <span class="badge {% if t.direction == 'en-tw' %}badge-tw{% else %}badge-en{% endif %}">
+            {% if t.direction == 'en-tw' %}TW{% else %}EN{% endif %}
+          </span>
+        </td>
+        <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-secondary);">
+          {{ t.source_text }}
+        </td>
+        <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--green);">
+          {{ t.translated_text }}
+        </td>
+        <td style="font-size:12px; color:var(--text-muted); white-space:nowrap;">
+          {{ t.created_at|date:"M j, Y" }} · {{ t.created_at|time:"g:i A" }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" style="text-align:center; padding:40px 0; color:var(--text-muted);">
+          <i class="fa-regular fa-comment-dots" style="font-size:24px; opacity:0.3; display:block; margin-bottom:10px;"></i>
+          No translations yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PAGINATION ===== -->
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}" class="page-btn"><i class="fa-solid fa-chevron-left"></i></a>
+  {% else %}
+  <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="page-btn current">{{ num }}</span>
+    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+      <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}" class="page-btn"><i class="fa-solid fa-chevron-right"></i></a>
+  {% else %}
+  <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

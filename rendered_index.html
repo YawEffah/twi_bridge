@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twi Bridge — English ↔ Twi Translator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FDFAF6;
+      --surface: #FFFFFF;
+      --border: #E8E0D4;
+      --border-soft: #F0EAE0;
+      --text-primary: #1C1713;
+      --text-secondary: #7A6E64;
+      --text-hint: #B0A898;
+      --accent: #C4501A;
+      --accent-light: #FBF0EA;
+      --accent-hover: #A8401280;
+      --green: #1A7A4A;
+      --green-light: #EAF5EE;
+      --sidebar-w: 280px;
+      --radius: 12px;
+      --font-display: 'DM Serif Display', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ---- SIDEBAR ---- */
+    aside {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .logo-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-tagline {
+      font-size: 11px;
+      color: var(--text-hint);
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .new-chat-btn {
+      margin: 16px 24px 0;
+      width: calc(100% - 48px);
+      padding: 10px 14px;
+      background: var(--accent-light);
+      border: 1px solid #EAC5B0;
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .new-chat-btn:hover { background: #F5DDD0; }
+
+    .sidebar-section-title {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      padding: 20px 24px 8px;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px;
+    }
+
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .history-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s;
+      margin-bottom: 2px;
+    }
+    .history-item:hover { background: var(--bg); }
+    .history-item.active { background: var(--accent-light); }
+
+    .history-item-source {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-meta {
+      font-size: 11px;
+      color: var(--text-hint);
+      margin-top: 2px;
+    }
+
+    .history-item .lang-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 4px;
+      font-weight: 500;
+    }
+    .badge-en { background: #EAF0FB; color: #1A4FA8; }
+    .badge-tw { background: var(--accent-light); color: var(--accent); }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-soft);
+      font-size: 12px;
+      color: var(--text-hint);
+      text-align: center;
+    }
+
+    /* ---- MAIN ---- */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--surface);
+    }
+
+    .direction-switcher {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .lang-pill {
+      padding: 6px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      transition: all 0.15s;
+    }
+    .lang-pill.active {
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .swap-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.12s, color 0.12s;
+      font-size: 13px;
+    }
+    .swap-btn:hover { background: var(--border-soft); color: var(--accent); }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    /* ---- TRANSLATION AREA ---- */
+    .translate-workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 32px;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      padding: 14px 16px 0;
+    }
+
+    .panel textarea {
+      flex: 1;
+      min-height: 180px;
+      padding: 12px 16px 14px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: transparent;
+    }
+    .panel textarea::placeholder { color: var(--text-hint); }
+
+    .panel-output textarea {
+      color: var(--green);
+      background: var(--green-light);
+    }
+    .panel-output {
+      border-color: #C5DFCF;
+      background: var(--green-light);
+    }
+    .panel-output .panel-label { color: #3D9E6A; }
+
+    .panel-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border-soft);
+    }
+    .panel-output .panel-footer { border-top-color: #C5DFCF; }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--text-hint);
+    }
+
+    .clear-btn {
+      font-size: 12px;
+      color: var(--text-hint);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.12s;
+    }
+    .clear-btn:hover { color: var(--accent); }
+
+    .copy-btn {
+      font-size: 12px;
+      color: var(--text-hint);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-body);
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.12s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .copy-btn:hover { color: var(--green); }
+
+    .translate-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-size: 16px;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .translate-btn:hover { background: #A8401A; }
+    .translate-btn:active { transform: scale(0.99); }
+    .translate-btn:disabled { background: var(--text-hint); cursor: not-allowed; }
+
+    .translate-btn .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .translate-btn.loading .spinner { display: block; }
+    .translate-btn.loading .btn-text { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- HISTORY FEED ---- */
+    .history-feed-title {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-hint);
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+
+    .history-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .feed-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      animation: fadeSlide 0.3s ease;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .feed-card-langs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .feed-card-langs .arrow {
+      font-size: 11px;
+      color: var(--text-hint);
+    }
+
+    .feed-card-source {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .feed-card-result {
+      font-size: 14px;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .feed-card-time {
+      font-size: 11px;
+      color: var(--text-hint);
+      margin-top: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 0 20px;
+      color: var(--text-hint);
+    }
+
+    .empty-state i {
+      font-size: 28px;
+      margin-bottom: 12px;
+      display: block;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    /* ---- ERROR ---- */
+    .error-banner {
+      background: #FBF0F0;
+      border: 1px solid #ECC;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #A02020;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .error-banner.show { display: flex; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 700px) {
+      aside { display: none; }
+      .panels { grid-template-columns: 1fr; }
+      .translate-workspace { padding: 16px; }
+      .top-bar { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 18 18">
+            <path d="M3 9h12M9 3l6 6-6 6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-name">Twi Bridge</div>
+          <div class="logo-tagline">English ↔ Twi</div>
+        </div>
+      </div>
+      <button class="new-chat-btn" onclick="newSession()">
+        <i class="fa-solid fa-plus" style="font-size:12px"></i>
+        New translation
+      </button>
+    </div>
+
+    <div class="sidebar-section-title">History</div>
+    <div class="history-list" id="sidebar-history">
+      <div style="font-size:12px; color:var(--text-hint); padding: 8px 12px;">No translations yet.</div>
+    </div>
+
+    <div class="sidebar-footer">
+      &copy; 2025 Twi Bridge
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="top-bar">
+      <span class="page-title">Translate</span>
+
+      <div class="direction-switcher">
+        <button class="lang-pill active" id="pill-en" onclick="setDirection('en-tw')">English → Twi</button>
+        <button class="swap-btn" onclick="swapDirection()" title="Swap languages">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </button>
+        <button class="lang-pill" id="pill-tw" onclick="setDirection('tw-en')">Twi → English</button>
+      </div>
+
+      <div style="font-size:12px; display:flex; align-items:center; gap:12px;">
+        <span style="color:var(--text-hint);" id="session-count">0 translations</span>
+        
+            <a href="/accounts/login/" style="color:var(--text-hint); text-decoration:none;">Log in</a>
+            <a href="/accounts/register/" style="background:var(--accent); color:#fff; padding:4px 8px; border-radius:4px; text-decoration:none;">Sign up</a>
+        
+      </div>
+    </div>
+
+    <div class="translate-workspace" id="workspace">
+
+      <div class="panels">
+        <!-- INPUT -->
+        <div class="panel">
+          <div class="panel-label" id="label-source">English</div>
+          <textarea id="input-text" placeholder="Type or paste text here…" oninput="updateCharCount()" onkeydown="handleKey(event)"></textarea>
+          <div class="panel-footer">
+            <span class="char-count" id="char-count">0 characters</span>
+            <button class="clear-btn" onclick="clearInput()">Clear</button>
+          </div>
+        </div>
+
+        <!-- OUTPUT -->
+        <div class="panel panel-output">
+          <div class="panel-label" id="label-target">Twi</div>
+          <textarea id="output-text" readonly placeholder="Translation will appear here…"></textarea>
+          <div class="panel-footer">
+            <span class="char-count" id="output-char-count"></span>
+            <button class="copy-btn" onclick="copyOutput()" id="copy-btn">
+              <i class="fa-regular fa-copy" style="font-size:12px"></i> Copy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="error-banner" id="error-banner">
+        <i class="fa-solid fa-circle-exclamation" style="font-size:14px"></i>
+        <span id="error-text">Something went wrong. Please try again.</span>
+      </div>
+
+      <button class="translate-btn" id="translate-btn" onclick="translate()">
+        <div class="spinner"></div>
+        <span class="btn-text">
+          <i class="fa-solid fa-language" style="font-size:17px"></i>
+          Translate
+        </span>
+      </button>
+
+      <div class="history-feed-title" id="feed-label" style="display:none;">This session</div>
+      <div class="history-feed" id="history-feed"></div>
+
+      <div class="empty-state" id="empty-state">
+        <i class="fa-regular fa-comment-dots"></i>
+        <p>Enter text above and hit Translate to get started.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <input type="hidden" name="csrfmiddlewaretoken" value="rQ4hkHbwwXPrjojmBJiKiR72LJv3AtypCk1qbOQac3GseZEPEzH7wY6TWCgnT04A">
+  <script>
+    const API_URL = '/api/translate/';
+    let direction = 'en-tw';
+    let sessionHistory = [];
+    let allHistory = [
+      
+    ];
+    if (allHistory.length === 0) {
+      allHistory = JSON.parse(localStorage.getItem('twibridge_history') || '[]');
+    }
+
+    function setDirection(dir) {
+      direction = dir;
+      document.getElementById('pill-en').classList.toggle('active', dir === 'en-tw');
+      document.getElementById('pill-tw').classList.toggle('active', dir === 'tw-en');
+      document.getElementById('label-source').textContent = dir === 'en-tw' ? 'English' : 'Twi';
+      document.getElementById('label-target').textContent = dir === 'en-tw' ? 'Twi' : 'English';
+      document.getElementById('input-text').placeholder = dir === 'en-tw'
+        ? 'Type or paste English text here…'
+        : 'Type or paste Twi text here…';
+      clearInput();
+    }
+
+    function swapDirection() {
+      setDirection(direction === 'en-tw' ? 'tw-en' : 'en-tw');
+    }
+
+    function updateCharCount() {
+      const val = document.getElementById('input-text').value;
+      document.getElementById('char-count').textContent = val.length + ' character' + (val.length === 1 ? '' : 's');
+    }
+
+    function clearInput() {
+      document.getElementById('input-text').value = '';
+      document.getElementById('output-text').value = '';
+      document.getElementById('char-count').textContent = '0 characters';
+      document.getElementById('output-char-count').textContent = '';
+      hideError();
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) translate();
+    }
+
+    function showError(msg) {
+      const b = document.getElementById('error-banner');
+      document.getElementById('error-text').textContent = msg;
+      b.classList.add('show');
+    }
+
+    function hideError() {
+      document.getElementById('error-banner').classList.remove('show');
+    }
+
+    async function translate() {
+      const input = document.getElementById('input-text').value.trim();
+      if (!input) { showError('Please enter some text to translate.'); return; }
+      hideError();
+
+      const btn = document.getElementById('translate-btn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+      document.getElementById('output-text').value = '';
+      document.getElementById('output-char-count').textContent = '';
+
+      const sourceLang = direction === 'en-tw' ? 'English' : 'Twi (Akan)';
+      const targetLang = direction === 'en-tw' ? 'Twi (Akan)' : 'English';
+
+      const prompt = `You are a professional translator specialising in ${sourceLang} and ${targetLang}.
+
+Translate the following ${sourceLang} text into ${targetLang}. Return ONLY the translated text, with no explanations, notes, labels, or extra commentary.
+
+Text to translate:
+${input}`;
+
+      try {
+        const csrf_token = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf_token
+          },
+          body: JSON.stringify({
+            text: input,
+            direction: direction
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.error || 'API error ' + response.status);
+        }
+
+        const data = await response.json();
+        const result = data.result || '';
+
+        if (!result) throw new Error('Empty response from translation service.');
+
+        document.getElementById('output-text').value = result;
+        document.getElementById('output-char-count').textContent = result.length + ' characters';
+
+        const entry = {
+          id: Date.now(),
+          direction,
+          source: input,
+          result,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          date: new Date().toLocaleDateString()
+        };
+
+        sessionHistory.unshift(entry);
+        allHistory.unshift(entry);
+        if (allHistory.length > 100) allHistory = allHistory.slice(0, 100);
+        localStorage.setItem('twibridge_history', JSON.stringify(allHistory));
+
+        renderFeed();
+        renderSidebar();
+
+      } catch (err) {
+        showError(err.message || 'Translation failed. Check your connection and try again.');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    function copyOutput() {
+      const val = document.getElementById('output-text').value;
+      if (!val) return;
+      navigator.clipboard.writeText(val).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check" style="font-size:12px"></i> Copied';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy" style="font-size:12px"></i> Copy';
+        }, 1800);
+      });
+    }
+
+    function renderFeed() {
+      const feed = document.getElementById('history-feed');
+      const label = document.getElementById('feed-label');
+      const empty = document.getElementById('empty-state');
+
+      if (sessionHistory.length === 0) {
+        feed.innerHTML = '';
+        label.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      label.style.display = 'block';
+      empty.style.display = 'none';
+
+      document.getElementById('session-count').textContent =
+        sessionHistory.length + ' translation' + (sessionHistory.length === 1 ? '' : 's');
+
+      feed.innerHTML = sessionHistory.map(e => {
+        const srcLang = e.direction === 'en-tw' ? 'English' : 'Twi';
+        const tgtLang = e.direction === 'en-tw' ? 'Twi' : 'English';
+        const srcClass = e.direction === 'en-tw' ? 'badge-en' : 'badge-tw';
+        const tgtClass = e.direction === 'en-tw' ? 'badge-tw' : 'badge-en';
+        return `<div class="feed-card">
+          <div class="feed-card-langs">
+            <span class="lang-badge ${srcClass}">${srcLang}</span>
+            <span class="arrow">→</span>
+            <span class="lang-badge ${tgtClass}">${tgtLang}</span>
+          </div>
+          <div class="feed-card-source">${escHtml(e.source)}</div>
+          <div class="feed-card-result">${escHtml(e.result)}</div>
+          <div class="feed-card-time">${e.time}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderSidebar() {
+      const el = document.getElementById('sidebar-history');
+      if (allHistory.length === 0) {
+        el.innerHTML = '<div style="font-size:12px; color:var(--text-hint); padding: 8px 12px;">No translations yet.</div>';
+        return;
+      }
+      el.innerHTML = allHistory.slice(0, 40).map(e => {
+        const srcLang = e.direction === 'en-tw' ? 'EN' : 'TW';
+        const tgtLang = e.direction === 'en-tw' ? 'TW' : 'EN';
+        const srcClass = e.direction === 'en-tw' ? 'badge-en' : 'badge-tw';
+        const tgtClass = e.direction === 'en-tw' ? 'badge-tw' : 'badge-en';
+        const preview = e.source.length > 32 ? e.source.slice(0, 32) + '…' : e.source;
+        return `<div class="history-item" onclick="loadEntry(${e.id})">
+          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+            <span class="lang-badge ${srcClass}" style="font-size:9px; padding:1px 5px;">${srcLang}</span>
+            <span style="font-size:9px; color:var(--text-hint);">→</span>
+            <span class="lang-badge ${tgtClass}" style="font-size:9px; padding:1px 5px;">${tgtLang}</span>
+          </div>
+          <div class="history-item-source">${escHtml(preview)}</div>
+          <div class="history-item-meta">${e.date} · ${e.time}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function loadEntry(id) {
+      const entry = allHistory.find(e => e.id === id);
+      if (!entry) return;
+      setDirection(entry.direction);
+      document.getElementById('input-text').value = entry.source;
+      document.getElementById('output-text').value = entry.result;
+      updateCharCount();
+      document.getElementById('output-char-count').textContent = entry.result.length + ' characters';
+      document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+    }
+
+    function newSession() {
+      sessionHistory = [];
+      clearInput();
+      renderFeed();
+      document.getElementById('session-count').textContent = '0 translations';
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    renderSidebar();
+    renderFeed();
+  </script>
+</body>
+</html>
